@@ -40,7 +40,7 @@ exports.login = async (params) => {
     let token = jwt.sign(
       { userId: hashedPassword.rows[0].id },
       process.env.JWT_TOKEN,
-      { expiresIn: "15m" },
+      { expiresIn: "60m" },
     );
     console.log("token is", token);
     if (await bcrypt.compare(params.password, hashedPassword.rows[0].password))
@@ -53,11 +53,18 @@ exports.login = async (params) => {
 exports.profile = async (params) => {
   try {
     let cached = await redis.get(`userId:${params.id}`);
-    if (cached) return cached;
-    let data = await pool.query(`SELECT email from USERS where id = $1`, [
+    if (cached) {
+        console.log(await redis.ttl(`userId:${params.id}`))
+      console.log("cache hit");
+      return JSON.parse(cached);
+    }
+    console.log('cache miss')
+    let data = await pool.query(`SELECT email,role from USERS where id = $1`, [
       params.id,
     ]);
-    await redis.set(`userId:${params.id}`, JSON.stringify(data.rows));
+    console.log('data tak aay', data.rows)
+    await redis.set(`userId:${params.id}`, JSON.stringify(data.rows), "EX", 60);
+    console.log('redis set hua')
     return data.rows;
   } catch (error) {
     console.log("err at", error);
@@ -70,7 +77,9 @@ exports.updateUser = async (params) => {
       `UPDATE USERS SET role= $1 where id = $2 returning email`,
       [params.body.role, params.id],
     );
-    if(updatedData.length>0) redis.del(`userId:${userId}`)
+    console.log('updatedData',updatedData)
+    if (updatedData.rows.length > 0) await redis.del(`userId:${params.id}`);
+    // console.log('inside resis', redis)
     return updatedData;
   } catch (error) {
     console.log("err is", error);

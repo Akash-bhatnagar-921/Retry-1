@@ -4,7 +4,7 @@ const pool = require("../database/db")
 exports.profile = async (req, res) => {
     try {
         let data = await userService.profile(req)
-        return res.status(200).json({msg:"User fetched",data:JSON.parse(data)})
+        return res.status(200).json({msg:"User fetched",data:data})
     } catch (error) {
         console.log('err is', error)
     }

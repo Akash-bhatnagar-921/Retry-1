@@ -3,6 +3,7 @@ const express = require("express")
 const bodyParser = require("body-parser")
 const userController = require("./controller/userController")
 const auth = require("./middleware/auth")
+const limit = require("./middleware/limiter")
 
 const app = express()
 const route = express.Router()
@@ -15,7 +16,7 @@ app.get("/",(req,res) => {
 
 app.post("/signUp", userController.register)
 app.post("/login", userController.login)
-app.post("/profile", auth.authenticate, userController.profile)
+app.post("/profile", auth.authenticate, limit.rateLimiter, userController.profile)
 app.put("/profile", auth.authenticate, userController.updateProfile)
 
 
