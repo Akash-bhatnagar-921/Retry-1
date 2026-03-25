@@ -4,6 +4,7 @@ const bodyParser = require("body-parser")
 const userController = require("./controller/userController")
 const auth = require("./middleware/auth")
 const limit = require("./middleware/limiter")
+require("./queue/rabbit")
 
 const app = express()
 const route = express.Router()
